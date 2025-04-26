@@ -92,8 +92,173 @@ public class Principal {
         }
 
         public void eliminar(int k) {
-            // Implementar eliminación
-            System.out.println("Eliminación aún no implementada.");
+            int idx = encontrarClave(k);
+
+            if (idx < n && claves[idx] == k) {
+                if (hoja) {
+                    eliminarDeHoja(idx);
+                } else {
+                    eliminarDeNoHoja(idx);
+                }
+            } else {
+                if (hoja) {
+                    System.out.println("La clave " + k + " no esta en el arbol.");
+                    return;
+                }
+                boolean ultima = (idx == n);
+
+                if (hijos[idx].n < t) {
+                    llenar(idx);
+                }
+
+                if (ultima && idx > n) {
+                    hijos[idx - 1].eliminar(k);
+                } else {
+                    hijos[idx].eliminar(k);
+                }
+            }
+        }
+
+        private int encontrarClave(int k) {
+            int idx = 0;
+            while (idx < n && claves[idx] < k) {
+                idx++;
+            }
+            return idx;
+        }
+
+        private void eliminarDeHoja(int idx) {
+            for (int i = idx + 1; i < n; i++) {
+                claves[i - 1] = claves[i];
+            }
+            n--;
+        }
+
+        private void eliminarDeNoHoja(int idx) {
+            int k = claves[idx];
+
+            if (hijos[idx].n >= t) {
+                int pred = obtenerPredecesor(idx);
+                claves[idx] = pred;
+                hijos[idx].eliminar(pred);
+            } else if (hijos[idx + 1].n >= t) {
+                int succ = obtenerSucesor(idx);
+                claves[idx] = succ;
+                hijos[idx + 1].eliminar(succ);
+            } else {
+                unir(idx);
+                hijos[idx].eliminar(k);
+            }
+        }
+
+        private int obtenerPredecesor(int idx) {
+            NodoB actual = hijos[idx];
+            while (!actual.hoja) {
+                actual = actual.hijos[actual.n];
+            }
+            return actual.claves[actual.n - 1];
+        }
+
+        private int obtenerSucesor(int idx) {
+            NodoB actual = hijos[idx + 1];
+            while (!actual.hoja) {
+                actual = actual.hijos[0];
+            }
+            return actual.claves[0];
+        }
+
+        private void llenar(int idx) {
+            if (idx != 0 && hijos[idx - 1].n >= t) {
+                tomarPrestadoDeAnterior(idx);
+            } else if (idx != n && hijos[idx + 1].n >= t) {
+                tomarPrestadoDeSiguiente(idx);
+            } else {
+                if (idx != n) {
+                    unir(idx);
+                } else {
+                    unir(idx - 1);
+                }
+            }
+        }
+
+        private void tomarPrestadoDeAnterior(int idx) {
+            NodoB hijo = hijos[idx];
+            NodoB hermano = hijos[idx - 1];
+
+            for (int i = hijo.n - 1; i >= 0; --i) {
+                hijo.claves[i + 1] = hijo.claves[i];
+            }
+
+            if (!hijo.hoja) {
+                for (int i = hijo.n; i >= 0; --i) {
+                    hijo.hijos[i + 1] = hijo.hijos[i];
+                }
+            }
+
+            hijo.claves[0] = claves[idx - 1];
+
+            if (!hijo.hoja) {
+                hijo.hijos[0] = hermano.hijos[hermano.n];
+            }
+
+            claves[idx - 1] = hermano.claves[hermano.n - 1];
+
+            hijo.n += 1;
+            hermano.n -= 1;
+        }
+
+        private void tomarPrestadoDeSiguiente(int idx) {
+            NodoB hijo = hijos[idx];
+            NodoB hermano = hijos[idx + 1];
+
+            hijo.claves[hijo.n] = claves[idx];
+
+            if (!hijo.hoja) {
+                hijo.hijos[hijo.n + 1] = hermano.hijos[0];
+            }
+
+            claves[idx] = hermano.claves[0];
+
+            for (int i = 1; i < hermano.n; ++i) {
+                hermano.claves[i - 1] = hermano.claves[i];
+            }
+
+            if (!hermano.hoja) {
+                for (int i = 1; i <= hermano.n; ++i) {
+                    hermano.hijos[i - 1] = hermano.hijos[i];
+                }
+            }
+
+            hijo.n += 1;
+            hermano.n -= 1;
+        }
+
+        private void unir(int idx) {
+            NodoB hijo = hijos[idx];
+            NodoB hermano = hijos[idx + 1];
+
+            hijo.claves[t - 1] = claves[idx];
+
+            for (int i = 0; i < hermano.n; ++i) {
+                hijo.claves[i + t] = hermano.claves[i];
+            }
+
+            if (!hijo.hoja) {
+                for (int i = 0; i <= hermano.n; ++i) {
+                    hijo.hijos[i + t] = hermano.hijos[i];
+                }
+            }
+
+            for (int i = idx + 1; i < n; ++i) {
+                claves[i - 1] = claves[i];
+            }
+
+            for (int i = idx + 2; i <= n; ++i) {
+                hijos[i - 1] = hijos[i];
+            }
+
+            hijo.n += hermano.n + 1;
+            n--;
         }
     }
 
@@ -111,7 +276,7 @@ public class Principal {
                 raiz.recorrer();
                 System.out.println();
             } else {
-                System.out.println("El arbol está vacío.");
+                System.out.println("El arbol está vacio.");
             }
         }
 
@@ -143,8 +308,18 @@ public class Principal {
         }
 
         public void eliminar(int k) {
-            if (raiz != null) {
-                raiz.eliminar(k);
+            if (raiz == null) {
+                System.out.println("El arbol está vacio");
+                return;
+            }
+            raiz.eliminar(k);
+
+            if (raiz.n == 0) {
+                if (raiz.hoja) {
+                    raiz = null;
+                } else {
+                    raiz = raiz.hijos[0];
+                }
             }
         }
     }
@@ -195,7 +370,7 @@ public class Principal {
                     System.out.println("Saliendo...");
                     break;
                 default:
-                    System.out.println("Opcion invalida.");
+                    System.out.println("Opción invalida.");
             }
         } while (opcion != 0);
 
